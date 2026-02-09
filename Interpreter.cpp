@@ -1,60 +1,85 @@
 #include "Interpreter.h"
-#include <stdexcept>
+#include <iostream>
+#include <cmath>
 
-// ---------------- CONSTRUCTOR ----------------
-Interpreter::Interpreter() {}
-
-// ---------------- INTERPRET ----------------
-void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements) {
-    for (const auto& stmt : statements) {
+void Interpreter::interpret(std::vector<std::unique_ptr<Stmt>>& statements) {
+    for (auto& stmt : statements) {
         stmt->accept(this);
     }
 }
 
-// ---------------- EXPR VISITORS ----------------
 Value Interpreter::visitLiteral(Literal* expr) {
-    std::string lex = expr->value.lexeme;
-    if (lex.find('.') != std::string::npos)
-        return Value(std::stod(lex));
-    return Value(std::stoi(lex));
+    return expr->value;
 }
 
-double Interpreter::visitGrouping(Grouping* expr) {
-    return expr->expression->accept(this);
+Value Interpreter::visitVariable(Variable* expr) {
+    return env.get(expr->name);
 }
 
-double Interpreter::visitBinary(Binary* expr) {
-    double left = expr->left->accept(this);
-    double right = expr->right->accept(this);
+Value Interpreter::visitUnary(Unary* expr) {
+    Value right = expr->right->accept(this);
 
     switch (expr->op.type) {
-        case TokenType::PLUS:  return left + right;
-        case TokenType::MINUS: return left - right;
-        case TokenType::STAR:  return left * right;
-        case TokenType::SLASH: return left / right;
+        case TokenType::MINUS:
+            return Value(-right.toDouble());
+        case TokenType::BANG_EQUAL:
+            return Value(right.toInt() == 0 ? 1 : 0);
         default:
-            throw std::runtime_error("Unknown binary operator");
+            return Value(0);
     }
 }
 
-double Interpreter::visitVariable(Variable* expr) {
-    Value val = globals.get(expr->name);
-    if (std::holds_alternative<int>(val)) return std::get<int>(val);
-    if (std::holds_alternative<double>(val)) return std::get<double>(val);
-    throw std::runtime_error("Cannot use string in numeric expression");
+Value Interpreter::visitBinary(Binary* expr) {
+    Value left = expr->left->accept(this);
+    Value right = expr->right->accept(this);
+
+    switch (expr->op.type) {
+        case TokenType::PLUS:
+            return Value(left.toDouble() + right.toDouble());
+        case TokenType::MINUS:
+            return Value(left.toDouble() - right.toDouble());
+        case TokenType::STAR:
+            return Value(left.toDouble() * right.toDouble());
+        case TokenType::SLASH:
+            if (right.toDouble() != 0)
+                return Value(left.toDouble() / right.toDouble());
+            return Value(0);
+        case TokenType::PERCENT:
+            return Value(static_cast<int>(left.toDouble()) % static_cast<int>(right.toDouble()));
+        case TokenType::GREATER:
+            return Value(left.toDouble() > right.toDouble() ? 1 : 0);
+        case TokenType::GREATER_EQUAL:
+            return Value(left.toDouble() >= right.toDouble() ? 1 : 0);
+        case TokenType::LESS:
+            return Value(left.toDouble() < right.toDouble() ? 1 : 0);
+        case TokenType::LESS_EQUAL:
+            return Value(left.toDouble() <= right.toDouble() ? 1 : 0);
+        case TokenType::EQUAL_EQUAL:
+            return Value(left.toDouble() == right.toDouble() ? 1 : 0);
+        case TokenType::BANG_EQUAL:
+            return Value(left.toDouble() != right.toDouble() ? 1 : 0);
+        default:
+            return Value(0);
+    }
 }
 
-// ---------------- STMT VISITORS ----------------
-void Interpreter::visitPrintStmt(PrintStmt* stmt) {
-    double value = stmt->expression->accept(this);
-    std::cout << value << "\n";
+Value Interpreter::visitGrouping(Grouping* expr) {
+    return expr->expression->accept(this);
+}
+
+void Interpreter::visitVarDecl(VarDecl* stmt) {
+    Value value;
+    if (stmt->initializer != nullptr) {
+        value = stmt->initializer->accept(this);
+    }
+    env.define(stmt->name, value);
 }
 
 void Interpreter::visitExprStmt(ExprStmt* stmt) {
     stmt->expression->accept(this);
 }
 
-void Interpreter::visitVarDecl(VarDecl* stmt) {
-    double value = stmt->initializer->accept(this);
-    globals.define(stmt->name, value);
+void Interpreter::visitPrintStmt(PrintStmt* stmt) {
+    Value value = stmt->expression->accept(this);
+    std::cout << value.toString() << std::endl;
 }

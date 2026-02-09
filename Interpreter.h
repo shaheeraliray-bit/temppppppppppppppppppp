@@ -1,28 +1,28 @@
 #pragma once
+#include <vector>
+#include <memory>
 #include "Expr.h"
 #include "Stmt.h"
 #include "Environment.h"
-#include <memory>
-#include <vector>
-#include <iostream>
 
 class Interpreter : public ExprVisitor, public StmtVisitor {
-public:
-    Interpreter();
-
-    void interpret(const std::vector<std::unique_ptr<Stmt>>& statements);
-
-    // ExprVisitor
-    double visitLiteral(Literal* expr) override;
-    double visitBinary(Binary* expr) override;
-    double visitGrouping(Grouping* expr) override;
-    double visitVariable(Variable* expr) override;
-
-    // StmtVisitor
-    void visitPrintStmt(PrintStmt* stmt) override;
-    void visitExprStmt(ExprStmt* stmt) override;
-    void visitVarDecl(VarDecl* stmt) override;
-
 private:
-    Environment globals;
+    Environment env;
+
+public:
+    Interpreter() {}
+
+    // ExprVisitor methods
+    Value visitLiteral(Literal* expr) override;
+    Value visitVariable(Variable* expr) override;
+    Value visitUnary(Unary* expr) override;
+    Value visitBinary(Binary* expr) override;
+    Value visitGrouping(Grouping* expr) override;
+
+    // StmtVisitor methods
+    void visitVarDecl(VarDecl* stmt) override;
+    void visitExprStmt(ExprStmt* stmt) override;
+    void visitPrintStmt(PrintStmt* stmt) override;
+
+    void interpret(std::vector<std::unique_ptr<Stmt>>& statements);
 };

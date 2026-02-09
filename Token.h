@@ -6,26 +6,26 @@ enum class TokenType {
     LEFT_PAREN, RIGHT_PAREN,
     LEFT_BRACE, RIGHT_BRACE,
     SEMICOLON,
-    PLUS, MINUS, STAR, SLASH,
-    EQUAL,
+    PLUS, MINUS, STAR, SLASH,PERCENT,
+    EQUAL,COMMA, DOT,
 
     // One or two character tokens
     EQUAL_EQUAL,
     BANG_EQUAL,
-    LESS, GREATER,
+    LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
 
     // Literals
     IDENTIFIER,
     NUMBER,
-    STRING,
+    STRING_LIT,
     // Keywords
-      NETLANG_VAR,        
-    NETLANG_PRINT,     
-    NETLANG_IF,
-    NETLANG_ELSE,
-    NETLANG_WHILE,
-    NETLANG_TRUE,
-    NETLANG_FALSE,
+      VAR,        
+    LOGONCONSOLE,     
+    IF,
+    ELSE,
+    WHILE,
+    TRUE,
+    FALSE,
 
     END_OF_FILE
 };

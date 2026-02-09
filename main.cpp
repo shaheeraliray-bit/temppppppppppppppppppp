@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include "Lexer.h"
@@ -8,9 +9,10 @@ int main() {
     std::ifstream file("test.net");
     std::stringstream buffer;
     buffer << file.rdbuf();
+    std::string code = buffer.str();
 
-    Lexer lexer(buffer.str());
-    auto tokens = lexer.scanTokens();
+    Lexer lexer(code);
+    std::vector<Token> tokens = lexer.scanTokens();
 
     Parser parser(tokens);
     auto statements = parser.parse();
